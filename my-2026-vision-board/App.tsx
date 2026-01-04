@@ -1,13 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { VisionState, AppStep } from './types';
-import { VISION_KEYWORDS } from './constants';
-import { generateVisionEncouragement, generateVisionImage } from './services/geminiService';
-import { PAYMENT_ASSETS } from './assets/payment';
-import { VISION_GALLERY } from './assets/vision_defaults';
+import React, { useState, useRef } from 'react';
+import { VisionState, AppStep } from './types.ts';
+import { VISION_KEYWORDS } from './constants.ts';
+import { generateVisionEncouragement, generateVisionImage } from './services/geminiService.ts';
+import { PAYMENT_ASSETS } from './assets/payment.ts';
+import { VISION_GALLERY } from './assets/vision_defaults.ts';
 
 const App: React.FC = () => {
-  const [hasKey, setHasKey] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,7 +26,6 @@ const App: React.FC = () => {
 
   const nextStep = () => setState(prev => ({ ...prev, step: prev.step + 1 }));
   
-  // 修正：手動重設所有狀態，而不使用會導致報錯的 window.location.reload()
   const resetApp = () => {
     setState(initialState);
     setIsLoading(false);
@@ -56,11 +54,13 @@ const App: React.FC = () => {
         generateVisionEncouragement(state.name, state.threeKeywords),
         generateVisionImage(state.threeKeywords)
       ]);
-      setState(prev => ({ ...prev, encouragement: msg, imageUrl: img || VISION_GALLERY[0].url, step: AppStep.WriteGoals }));
+      setState(prev => ({ 
+        ...prev, 
+        encouragement: msg, 
+        imageUrl: img || VISION_GALLERY[0].url, 
+        step: AppStep.WriteGoals 
+      }));
     } catch (err: any) {
-      if (err.message === "QUOTA_LIMIT") {
-        setHasKey(false);
-      }
       setState(prev => ({ ...prev, step: AppStep.WriteGoals }));
     } finally {
       setIsLoading(false);
@@ -77,25 +77,6 @@ const App: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  const handleKeyDialog = async () => {
-    if ((window as any).aistudio) {
-      await (window as any).aistudio.openSelectKey();
-      setHasKey(true);
-    }
-  };
-
-  if (!hasKey) {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-6">
-        <div className="glass-panel p-10 rounded-3xl max-w-md text-center">
-          <h2 className="text-xl font-medium mb-4">系統繁忙中</h2>
-          <p className="text-slate-500 mb-8 text-sm">目前使用人數較多，若要繼續體驗高品質生成，請選取您的個人 API 金鑰。</p>
-          <button onClick={handleKeyDialog} className="w-full bg-slate-800 text-white py-4 rounded-full font-light tracking-widest uppercase">選取金鑰</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen py-12 px-4 flex flex-col items-center">
@@ -316,7 +297,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* 控制面板：切換圖片與下載 */}
             <div className="max-w-3xl mx-auto glass-panel p-8 rounded-[2.5rem] mb-12 flex flex-col items-center">
               <h4 className="serif text-slate-700 mb-6 tracking-widest">更換願景視覺</h4>
               
@@ -331,7 +311,6 @@ const App: React.FC = () => {
                   </button>
                 ))}
                 
-                {/* 上傳按鈕 */}
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-400 transition-all bg-white"
@@ -354,7 +333,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* 贊助資訊 */}
             <div className="max-w-md mx-auto p-12 glass-panel rounded-[3rem] text-center border-indigo-50 shadow-2xl shadow-indigo-100/30">
               <div className="flex justify-center mb-8">
                  <div className="p-4 bg-amber-50 rounded-full text-amber-500 shadow-sm">
@@ -363,7 +341,7 @@ const App: React.FC = () => {
               </div>
               <h4 className="serif text-xl text-slate-800 mb-4 tracking-widest">賞杯咖啡，支持創作者</h4>
               <p className="text-slate-500 text-xs font-light leading-relaxed mb-10 px-4">
-                這是一個希望能溫暖人心的工具。<br/>如果您喜歡這個作品，歡迎贊助一杯咖啡，<br/>支持獨立開發者持續創作！
+                這是一個希望能溫慢人心的工具。<br/>如果您喜歡這個作品，歡迎贊助一杯咖啡，<br/>支持獨立開發者持續創作！
               </p>
               
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 mb-10 shadow-inner">
