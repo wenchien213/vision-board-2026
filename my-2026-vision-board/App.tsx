@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { VisionState, AppStep } from './types';
 import { VISION_KEYWORDS } from './constants';
 import { generateVisionEncouragement, generateVisionImage } from './services/geminiService';
@@ -24,7 +23,10 @@ const App: React.FC = () => {
 
   const [state, setState] = useState<VisionState>(initialState);
 
-  const nextStep = () => setState(prev => ({ ...prev, step: prev.step + 1 }));
+  const nextStep = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setState(prev => ({ ...prev, step: prev.step + 1 }));
+  };
   
   const resetApp = () => {
     setState(initialState);
@@ -34,16 +36,27 @@ const App: React.FC = () => {
 
   const handleDownload = async () => {
     if (boardRef.current) {
-      const canvas = await (window as any).html2canvas(boardRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 3,
-        useCORS: true,
-        logging: false
-      });
-      const link = document.createElement('a');
-      link.download = `${state.name}_2026_願景板.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      setIsLoading(true);
+      // 給予一點時間讓 DOM 渲染完成
+      setTimeout(async () => {
+        try {
+          const canvas = await (window as any).html2canvas(boardRef.current, {
+            backgroundColor: '#ffffff',
+            scale: 4, // 提高解析度
+            useCORS: true,
+            logging: false,
+            letterRendering: true
+          });
+          const link = document.createElement('a');
+          link.download = `2026_願景板_${state.name}.png`;
+          link.href = canvas.toDataURL('image/png', 1.0);
+          link.click();
+        } catch (err) {
+          console.error("Download error:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 500);
     }
   };
 
@@ -67,53 +80,49 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setState(prev => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
-    <div className="min-h-screen py-12 px-4 flex flex-col items-center">
+    <div className="min-h-screen py-12 px-6 flex flex-col items-center">
       {isLoading && (
-        <div className="fixed inset-0 z-50 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6">
-          <div className="w-16 h-16 border-2 border-indigo-100 border-t-indigo-400 rounded-full animate-spin mb-8"></div>
-          <div className="serif text-2xl text-slate-700 animate-pulse tracking-widest">宇宙正在編織你的專屬祝福小語</div>
-          <p className="mt-4 text-slate-400 font-light tracking-wide">正在同步未來的頻率...</p>
+        <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6 transition-all">
+          <div className="relative w-24 h-24 mb-10">
+            <div className="absolute inset-0 border-2 border-slate-100 rounded-full"></div>
+            <div className="absolute inset-0 border-t-2 border-slate-900 rounded-full animate-spin"></div>
+          </div>
+          <div className="serif text-3xl text-slate-800 tracking-[0.2em] mb-4 animate-pulse">正在為您開啟未來的門扉</div>
+          <p className="text-slate-500 font-light tracking-widest text-sm uppercase">Synchronizing with 2026 frequency...</p>
         </div>
       )}
 
-      <div className="max-w-4xl w-full fade-in">
+      <div className="max-w-4xl w-full step-transition">
         {state.step === AppStep.Welcome && (
-          <div className="max-w-md mx-auto mt-20 text-center">
-            <h1 className="text-4xl md:text-5xl font-light mb-4 serif tracking-widest">2026 願景板</h1>
-            <p className="text-slate-500 mb-16 font-light leading-relaxed">製作屬於你、獨一無二的 2026 願景夢想版，<br/>協助你聆聽內心真正的聲音</p>
-            <input 
-              type="text" 
-              placeholder="您的名字或暱稱"
-              className="w-full input-elegant py-4 text-center text-xl mb-12 placeholder:text-slate-300"
-              value={state.name}
-              onChange={e => setState(p => ({ ...p, name: e.target.value }))}
-            />
+          <div className="max-w-md mx-auto mt-24 text-center">
+            <span className="text-[10px] uppercase tracking-[0.6em] text-slate-500 mb-6 block font-medium">Vision Board Creator</span>
+            <h1 className="text-5xl md:text-6xl font-light mb-8 serif tracking-[0.2em] leading-tight text-slate-900">2026 願景板</h1>
+            <p className="text-slate-600 mb-20 font-light leading-relaxed tracking-wide text-sm">製作屬於你、獨一無二的 2026，<br/>在未來的藍圖裡，聽見靈魂深處的回響。</p>
+            <div className="relative mb-16">
+              <input 
+                type="text" 
+                placeholder="輸入您的名字或稱呼"
+                className="w-full input-elegant py-4 text-center text-xl placeholder:text-slate-400 text-slate-800 bg-transparent border-b border-slate-300 focus:border-slate-900 transition-all outline-none"
+                value={state.name}
+                onChange={e => setState(p => ({ ...p, name: e.target.value }))}
+              />
+            </div>
             <button 
               onClick={() => state.name && nextStep()}
-              className="w-full bg-slate-900 text-white py-5 rounded-full font-light tracking-[0.3em] button-hover shadow-xl shadow-slate-200"
+              disabled={!state.name}
+              className="w-full bg-slate-900 text-white py-6 rounded-full font-light tracking-[0.4em] text-sm hover:bg-slate-800 disabled:opacity-30 transition-all shadow-2xl shadow-slate-200 uppercase"
             >
-              開始
+              開啟旅程
             </button>
           </div>
         )}
 
         {state.step === AppStep.PickTen && (
-          <div className="text-center">
-            <h2 className="text-2xl mb-2 serif">願景關鍵字</h2>
-            <p className="text-slate-400 mb-12 font-light">請在以下關鍵字中選擇 10 個對你來說最重要的詞彙 ({state.tenKeywords.length}/10)</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-16">
+          <div className="text-center max-w-5xl mx-auto">
+            <h2 className="text-3xl mb-4 serif tracking-widest">願景本質</h2>
+            <p className="text-slate-600 mb-16 font-light tracking-widest">請從以下關鍵字中，挑選 10 個最能觸動你的詞彙 ({state.tenKeywords.length}/10)</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-20">
               {VISION_KEYWORDS.map(kw => {
                 const active = state.tenKeywords.includes(kw);
                 return (
@@ -123,28 +132,30 @@ const App: React.FC = () => {
                       if (active) setState(p => ({ ...p, tenKeywords: p.tenKeywords.filter(k => k !== kw) }));
                       else if (state.tenKeywords.length < 10) setState(p => ({ ...p, tenKeywords: [...p.tenKeywords, kw] }));
                     }}
-                    className={`p-3 rounded-xl border text-sm transition-all duration-500 ${active ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white/50 border-slate-100 text-slate-500 hover:bg-white'}`}
+                    className={`keyword-btn py-4 px-2 rounded-2xl border text-sm tracking-widest transition-all duration-500 ${active ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white/40 border-slate-200 text-slate-600 hover:border-slate-400'}`}
                   >
                     {kw}
                   </button>
                 )
               })}
             </div>
-            <button 
-              disabled={state.tenKeywords.length !== 10}
-              onClick={nextStep}
-              className="px-16 py-4 bg-slate-900 text-white rounded-full font-light tracking-widest disabled:opacity-20 shadow-lg"
-            >
-              選好了
-            </button>
+            <div className="sticky bottom-10">
+              <button 
+                disabled={state.tenKeywords.length !== 10}
+                onClick={nextStep}
+                className="px-20 py-5 bg-slate-900 text-white rounded-full font-light tracking-[0.3em] text-sm disabled:opacity-10 shadow-2xl hover:bg-slate-800 transition-all"
+              >
+                下一步
+              </button>
+            </div>
           </div>
         )}
 
         {state.step === AppStep.PickThree && (
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl mb-2 serif">淬鍊願景</h2>
-            <p className="text-slate-400 mb-12 font-light">請從這 10 個詞彙中，選出絕對重要的 3 個 ({state.threeKeywords.length}/3)</p>
-            <div className="flex flex-wrap justify-center gap-4 mb-16">
+            <h2 className="text-3xl mb-4 serif tracking-widest">淬鍊靈魂</h2>
+            <p className="text-slate-600 mb-20 font-light tracking-widest">在 2026，你最渴望擁有的 3 個核心是？ ({state.threeKeywords.length}/3)</p>
+            <div className="flex flex-wrap justify-center gap-6 mb-24">
               {state.tenKeywords.map(kw => {
                 const active = state.threeKeywords.includes(kw);
                 return (
@@ -154,7 +165,7 @@ const App: React.FC = () => {
                       if (active) setState(p => ({ ...p, threeKeywords: p.threeKeywords.filter(k => k !== kw) }));
                       else if (state.threeKeywords.length < 3) setState(p => ({ ...p, threeKeywords: [...p.threeKeywords, kw] }));
                     }}
-                    className={`px-8 py-4 rounded-2xl border text-lg transition-all ${active ? 'bg-white border-indigo-300 text-indigo-600 shadow-xl' : 'bg-white/50 border-slate-100 text-slate-400'}`}
+                    className={`px-12 py-6 rounded-[2rem] border text-xl serif transition-all duration-700 ${active ? 'bg-white border-slate-900 text-slate-900 shadow-2xl scale-110' : 'bg-white/30 border-slate-200 text-slate-500'}`}
                   >
                     {kw}
                   </button>
@@ -164,32 +175,34 @@ const App: React.FC = () => {
             <button 
               disabled={state.threeKeywords.length !== 3}
               onClick={handleFinishThree}
-              className="px-16 py-4 bg-slate-900 text-white rounded-full font-light tracking-widest disabled:opacity-20 shadow-lg"
+              className="px-24 py-6 bg-slate-900 text-white rounded-full font-light tracking-[0.4em] text-sm disabled:opacity-10 shadow-2xl hover:bg-slate-800 transition-all"
             >
-              選好了
+              確認願景
             </button>
           </div>
         )}
 
         {state.step === AppStep.WriteGoals && (
           <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-lg text-slate-400 mb-4 font-light tracking-widest uppercase">你的 2026 願景關鍵字為</h2>
-              <div className="flex justify-center gap-6 mb-8 serif text-3xl text-indigo-900">
-                {state.threeKeywords.map(k => <span key={k}>#{k}</span>)}
+            <div className="text-center mb-24">
+              <span className="text-[10px] uppercase tracking-[0.5em] text-slate-500 mb-8 block font-medium">Core Vision</span>
+              <div className="flex justify-center gap-8 mb-12 serif text-4xl text-slate-900">
+                {state.threeKeywords.map(k => <span key={k} className="px-2 border-b border-slate-200">#{k}</span>)}
               </div>
-              <div className="p-8 bg-indigo-50/50 rounded-3xl italic text-slate-700 leading-relaxed font-light mb-4">
-                「 {state.encouragement} 」
+              <div className="px-10 py-12 glass-panel rounded-[3rem] text-slate-700 leading-[2] font-light italic text-lg relative group">
+                <span className="absolute top-4 left-6 text-6xl text-slate-200 serif">“</span>
+                {state.encouragement}
+                <span className="absolute bottom-4 right-6 text-6xl text-slate-200 serif rotate-180">“</span>
               </div>
             </div>
             
-            <p className="text-slate-500 mb-8 font-light text-center">請寫下 2026 年想達成的 5 個目標清單</p>
-            <div className="space-y-6 mb-16">
+            <h3 className="text-center text-slate-600 mb-12 font-light tracking-widest uppercase text-xs">請寫下 2026 的 5 個具體目標</h3>
+            <div className="space-y-8 mb-20">
               {state.fiveGoals.map((g, i) => (
-                <div key={i} className="flex items-center group">
-                  <span className="text-slate-300 mr-4 font-light">{i+1}.</span>
+                <div key={i} className="flex items-center group relative">
+                  <span className="absolute -left-12 text-[10px] text-slate-400 serif font-bold">0{i+1}</span>
                   <input 
-                    className="flex-1 input-elegant py-3"
+                    className="w-full bg-transparent border-b border-slate-300 py-4 text-slate-900 font-normal placeholder:text-slate-500 focus:border-slate-900 outline-none transition-all"
                     value={g}
                     onChange={e => {
                       const n = [...state.fiveGoals];
@@ -204,20 +217,20 @@ const App: React.FC = () => {
             <button 
               disabled={!state.fiveGoals.every(g => g.trim())}
               onClick={nextStep}
-              className="w-full bg-slate-900 text-white py-5 rounded-full font-light tracking-widest disabled:opacity-20 shadow-lg"
+              className="w-full bg-slate-900 text-white py-6 rounded-full font-light tracking-[0.4em] text-sm disabled:opacity-10 shadow-2xl hover:bg-slate-800 transition-all uppercase"
             >
-              寫好了
+              寫好了！
             </button>
           </div>
         )}
 
         {state.step === AppStep.RefineGoals && (
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl mb-4 serif">最終淬鍊</h2>
-            <p className="text-slate-500 mb-4 font-light leading-relaxed">很棒！你寫下了想做的事～<br/>現在我們再來淬鍊一下，請你靜下心，深呼吸...</p>
-            <p className="text-indigo-600 mb-12 font-medium tracking-wide">這五件事裡，你絕對要實現的哪三個呢？</p>
+            <h2 className="text-3xl mb-6 serif tracking-widest leading-relaxed">很棒！你寫下了想做的事～<br/>請你靜下心，深呼吸...</h2>
+            <p className="text-slate-700 mb-6 font-light leading-relaxed tracking-wide">這五件事裡，你絕對要達成的事情是哪三個呢？</p>
+            <p className="text-slate-900 mb-20 font-medium tracking-[0.2em] text-sm">請挑選出最絕對的 3 個項目</p>
             
-            <div className="space-y-4 mb-16">
+            <div className="space-y-4 mb-24">
               {state.fiveGoals.map((g, i) => {
                 const active = state.finalThreeGoals.includes(g);
                 return (
@@ -227,9 +240,10 @@ const App: React.FC = () => {
                       if (active) setState(p => ({ ...p, finalThreeGoals: p.finalThreeGoals.filter(x => x !== g) }));
                       else if (state.finalThreeGoals.length < 3) setState(p => ({ ...p, finalThreeGoals: [...p.finalThreeGoals, g] }));
                     }}
-                    className={`w-full p-6 text-left rounded-3xl border transition-all ${active ? 'bg-white border-indigo-400 shadow-md text-indigo-700' : 'bg-white/50 border-slate-100 text-slate-500'}`}
+                    className={`w-full p-8 text-left rounded-[2rem] border transition-all duration-500 flex items-center gap-6 ${active ? 'bg-white border-slate-900 shadow-xl text-slate-900 translate-x-2' : 'bg-white/30 border-slate-200 text-slate-700 hover:border-slate-400'}`}
                   >
-                    {g}
+                    <div className={`w-3 h-3 rounded-full border ${active ? 'bg-slate-900 border-slate-900' : 'border-slate-300'}`}></div>
+                    <span className="font-normal tracking-wide">{g}</span>
                   </button>
                 )
               })}
@@ -237,126 +251,114 @@ const App: React.FC = () => {
             <button 
               disabled={state.finalThreeGoals.length !== 3}
               onClick={nextStep}
-              className="px-20 py-5 bg-slate-900 text-white rounded-full font-light tracking-widest disabled:opacity-20 shadow-lg"
+              className="px-24 py-6 bg-slate-900 text-white rounded-full font-light tracking-[0.4em] text-sm disabled:opacity-10 shadow-2xl hover:bg-slate-800 transition-all uppercase"
             >
-              完成製作！
+              生成願景板
             </button>
           </div>
         )}
 
         {state.step === AppStep.FinalBoard && (
-          <div className="pb-20">
+          <div className="pb-32">
+            {/* 願景板主體 */}
             <div 
               ref={boardRef}
-              className="bg-white p-8 md:p-20 rounded-[3rem] shadow-2xl border border-slate-50 flex flex-col items-center text-center relative overflow-hidden mb-12"
-              style={{ minHeight: '800px' }}
+              className="bg-white p-12 md:p-32 rounded-[4rem] shadow-2xl border border-slate-50 flex flex-col items-center text-center relative overflow-hidden mb-16"
+              style={{ minHeight: '1200px', width: '100%', maxWidth: '1000px', margin: '0 auto' }}
             >
-              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/40 rounded-full blur-3xl -mr-48 -mt-48"></div>
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-rose-50/40 rounded-full blur-3xl -ml-48 -mb-48"></div>
+              {/* 背景質感裝飾 */}
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#fdfcfb] rounded-full blur-[100px] -mr-64 -mt-64 opacity-50"></div>
+              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#f3f4f6] rounded-full blur-[100px] -ml-64 -mb-64 opacity-50"></div>
 
-              <div className="relative z-10 w-full">
-                <header className="mb-16">
-                  <h1 className="text-4xl serif text-slate-900 mb-4 tracking-widest">{state.name} 的 2026 願景板</h1>
-                  <div className="h-0.5 w-12 bg-slate-900 mx-auto opacity-20"></div>
+              <div className="relative z-10 w-full flex flex-col items-center">
+                <header className="mb-24 w-full">
+                  <span className="text-[10px] uppercase tracking-[1em] text-slate-500 font-bold mb-8 block">Manifestation of 2026</span>
+                  <h1 className="text-5xl md:text-6xl serif text-slate-900 mb-6 tracking-[0.2em]">{state.name}</h1>
+                  <div className="h-[1px] w-24 bg-slate-900 mx-auto opacity-10"></div>
                 </header>
 
-                <div className="flex flex-col lg:flex-row gap-16 mb-24 items-center">
-                  <div className="w-full lg:w-1/2">
-                    <div className="aspect-square bg-slate-50 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
-                      {state.imageUrl ? <img src={state.imageUrl} className="w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">願景視覺</div>}
+                {/* 視覺與核心詞彙區 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 mb-32 items-center w-full">
+                  <div className="w-full">
+                    <div className="aspect-[4/5] bg-slate-50 rounded-[3rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.12)] border-[12px] border-white">
+                      {state.imageUrl ? (
+                        <img src={state.imageUrl} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 serif">Visual Reflection</div>
+                      )}
                     </div>
                   </div>
-                  <div className="w-full lg:w-1/2 text-left">
-                    <div className="mb-12">
-                      <h3 className="text-[10px] uppercase tracking-[0.5em] text-slate-400 font-bold mb-6">三個 2026 關鍵字</h3>
-                      <div className="flex flex-wrap gap-5 serif text-3xl text-indigo-900">
-                        {state.threeKeywords.map(k => <span key={k}>#{k}</span>)}
+                  <div className="text-left flex flex-col justify-center h-full">
+                    <div className="mb-20">
+                      <h3 className="text-[9px] uppercase tracking-[0.6em] text-slate-500 font-bold mb-10 border-b border-slate-100 pb-4 inline-block">The Essences</h3>
+                      <div className="flex flex-col gap-6 serif text-4xl text-slate-900">
+                        {state.threeKeywords.map(k => <span key={k} className="hover:translate-x-2 transition-transform duration-500">#{k}</span>)}
                       </div>
                     </div>
-                    <div className="text-2xl serif italic text-slate-700 leading-relaxed border-l-2 border-indigo-100 pl-8 py-2">
+                    <div className="text-2xl serif italic text-slate-700 leading-[1.8] font-light border-l-[3px] border-slate-200 pl-10 py-4 max-w-sm">
                       「 {state.encouragement} 」
                     </div>
                   </div>
                 </div>
 
-                <div className="w-full max-w-xl mx-auto">
-                  <h3 className="text-[10px] uppercase tracking-[0.5em] text-slate-400 font-bold mb-12">2026 一定會完成的事</h3>
-                  <div className="space-y-12 text-left">
+                {/* 目標清單區 */}
+                <div className="w-full max-w-2xl">
+                  <h3 className="text-[9px] uppercase tracking-[0.6em] text-slate-500 font-bold mb-16 border-b border-slate-100 pb-4 inline-block">Milestones to reach</h3>
+                  <div className="space-y-16 text-left">
                     {state.finalThreeGoals.map((g, i) => (
-                      <div key={i} className="flex items-baseline border-b border-slate-50 pb-8">
-                        <span className="serif text-4xl text-indigo-200 mr-10 font-light">0{i+1}</span>
-                        <p className="text-2xl text-slate-800 font-light tracking-wide leading-snug">{g}</p>
+                      <div key={i} className="flex items-baseline group">
+                        <span className="serif text-5xl text-slate-900 mr-12 font-bold group-hover:text-slate-700 transition-colors duration-700">0{i+1}</span>
+                        <div className="border-b border-slate-100 pb-10 w-full">
+                          <p className="text-2xl text-slate-900 font-normal tracking-widest leading-relaxed">{g}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <footer className="mt-32 text-[9px] tracking-[0.8em] text-slate-300 uppercase">
-                  Studio • Whispers of 2026 • {new Date().getFullYear()}
+                <footer className="mt-40 text-[9px] tracking-[1.2em] text-slate-400 uppercase font-medium">
+                  Future Self • Whispers of 2026 • Design by {state.name}
                 </footer>
               </div>
             </div>
 
-            <div className="max-w-3xl mx-auto glass-panel p-8 rounded-[2.5rem] mb-12 flex flex-col items-center">
-              <h4 className="serif text-slate-700 mb-6 tracking-widest">更換願景視覺</h4>
-              
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
-                {VISION_GALLERY.map(item => (
-                  <button 
-                    key={item.id}
-                    onClick={() => setState(p => ({ ...p, imageUrl: item.url }))}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${state.imageUrl === item.url ? 'border-indigo-400 scale-110 shadow-lg' : 'border-white opacity-60 hover:opacity-100'}`}
-                  >
-                    <img src={item.url} className="w-full h-full object-cover" alt={item.title} />
-                  </button>
-                ))}
-                
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-400 transition-all bg-white"
-                >
-                  <svg className="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  <span className="text-[8px]">上傳</span>
-                </button>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
-              </div>
-              <p className="text-[10px] text-slate-400 mb-10 tracking-widest italic">✨ 可上傳您喜歡的圖片</p>
-
-              <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                <button onClick={handleDownload} className="px-12 py-5 bg-slate-900 text-white rounded-full font-light tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 transition-colors">
+            {/* 控制面板 */}
+            <div className="max-w-3xl mx-auto glass-panel p-12 rounded-[3.5rem] mb-12 flex flex-col items-center">
+              <div className="flex flex-col sm:flex-row gap-6 w-full justify-center">
+                <button onClick={handleDownload} className="px-16 py-6 bg-slate-900 text-white rounded-full font-light tracking-[0.4em] flex items-center justify-center gap-4 shadow-2xl hover:bg-slate-800 transition-all text-xs uppercase">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  下載願景板
+                  下載 2026 願景
                 </button>
-                <button onClick={resetApp} className="px-12 py-5 bg-white border border-slate-200 text-slate-600 rounded-full font-light tracking-widest hover:bg-slate-50 transition-colors">
-                  再玩一次
+                <button onClick={resetApp} className="px-16 py-6 bg-white border border-slate-200 text-slate-600 rounded-full font-light tracking-[0.4em] hover:bg-slate-50 transition-all text-xs uppercase">
+                  重新開始
                 </button>
               </div>
             </div>
 
-            <div className="max-w-md mx-auto p-12 glass-panel rounded-[3rem] text-center border-indigo-50 shadow-2xl shadow-indigo-100/30">
-              <div className="flex justify-center mb-8">
-                 <div className="p-4 bg-amber-50 rounded-full text-amber-500 shadow-sm">
-                   <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M4 11n2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                 </div>
+            {/* 支持創作者 */}
+            <div className="max-w-md mx-auto p-16 glass-panel rounded-[4rem] text-center">
+              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-10 text-amber-500 shadow-sm">
+                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M4 11n2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h4 className="serif text-xl text-slate-800 mb-4 tracking-widest">賞杯咖啡，支持創作者</h4>
-              <p className="text-slate-500 text-xs font-light leading-relaxed mb-10 px-4">
-                這是一個希望能溫慢人心的工具。<br/>如果您喜歡這個作品，歡迎贊助一杯咖啡，<br/>支持獨立開發者持續創作！
+              <h4 className="serif text-2xl text-slate-900 mb-6 tracking-widest">賞杯咖啡</h4>
+              <p className="text-slate-700 text-xs font-light leading-relaxed mb-12 px-2 tracking-wide">
+                如果這個小工具能為您的未來帶來一絲力量，<br/>歡迎贊助創作者一杯咖啡。<br/>您的支持是讓美好事物持續發芽的動力。
               </p>
               
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 mb-10 shadow-inner">
+              <div className="bg-white p-10 rounded-[3rem] border border-slate-200 mb-10 shadow-inner">
                 <img 
                   src={`data:image/png;base64,${PAYMENT_ASSETS.qrCode}`} 
-                  className="w-40 h-40 mx-auto mb-8 shadow-md border-4 border-white rounded-2xl" 
+                  className="w-48 h-48 mx-auto mb-10 shadow-md border-[6px] border-white rounded-[2rem]" 
                   alt="Bank QR" 
                 />
-                <div className="text-xs text-slate-600 font-medium space-y-2">
+                <div className="text-xs text-slate-700 font-medium space-y-3">
+                  <p className="tracking-[0.5em] uppercase text-[9px] text-slate-400">Bank Details</p>
                   <p className="tracking-widest">{PAYMENT_ASSETS.bankName}</p>
-                  <p className="text-lg font-light tracking-widest text-slate-800">{PAYMENT_ASSETS.accountNumber}</p>
+                  <p className="text-xl font-light tracking-[0.2em] text-slate-900">{PAYMENT_ASSETS.accountNumber}</p>
                 </div>
               </div>
               
-              <p className="text-[10px] text-indigo-400 font-medium tracking-[0.2em] uppercase">✨ {PAYMENT_ASSETS.note} ✨</p>
+              <p className="text-[10px] text-slate-500 font-medium tracking-[0.3em] uppercase italic">✨ {PAYMENT_ASSETS.note} ✨</p>
             </div>
           </div>
         )}
