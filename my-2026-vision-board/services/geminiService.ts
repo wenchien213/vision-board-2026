@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 export async function generateVisionEncouragement(name: string, keywords: string[]): Promise<string> {
@@ -9,17 +8,15 @@ export async function generateVisionEncouragement(name: string, keywords: string
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 1000 }
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
     return response.text?.trim() || "你的 2026 將會是綻放無限光彩的一年。";
   } catch (error: any) {
-    if (error.status === 429 || error.message?.includes("quota")) {
-      throw new Error("QUOTA_LIMIT");
-    }
+    console.error("Gemini Error:", error);
     return "勇往直前，宇宙會成為你的雙翼。";
   }
 }
@@ -30,22 +27,24 @@ export async function generateVisionImage(keywords: string[]): Promise<string> {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
+      model: 'gemini-2.5-flash-image',
       contents: { parts: [{ text: prompt }] },
       config: {
-        imageConfig: { aspectRatio: "1:1", imageSize: "1K" }
+        imageConfig: { aspectRatio: "1:1" }
       }
     });
-    if (response.candidates && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+    
+    const candidate = response.candidates?.[0];
+    if (candidate?.content?.parts) {
+      for (const part of candidate.content.parts) {
+        if (part.inlineData) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
       }
     }
     return "";
   } catch (error: any) {
-    if (error.status === 429 || error.message?.includes("quota")) {
-      throw new Error("QUOTA_LIMIT");
-    }
+    console.error("Gemini Image Error:", error);
     return "";
   }
 }
