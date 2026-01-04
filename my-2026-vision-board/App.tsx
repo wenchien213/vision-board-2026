@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { VisionState, AppStep } from './types.ts';
-import { VISION_KEYWORDS } from './constants.ts';
-import { generateVisionEncouragement, generateVisionImage } from './services/geminiService.ts';
-import { PAYMENT_ASSETS } from './assets/payment.ts';
-import { VISION_GALLERY } from './assets/vision_defaults.ts';
+import { VisionState, AppStep } from './types';
+import { VISION_KEYWORDS } from './constants';
+import { generateVisionEncouragement, generateVisionImage } from './services/geminiService';
+import { PAYMENT_ASSETS } from './assets/payment';
+import { VISION_GALLERY } from './assets/vision_defaults';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
