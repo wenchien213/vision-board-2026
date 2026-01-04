@@ -1,0 +1,10 @@
+
+// 收款資訊設定
+// 您可以將此處的 data 替換為您的圖片路徑 (例如: "/assets/payment/qr.png") 
+// 或者繼續使用 Base64 字串
+export const PAYMENT_ASSETS = {
+  qrCode: "iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQAQAAAAC7uBEnAAAByElEQVR4nO2YwY7DIBAFv/9rd98pUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUPUvshUiR7SNoeqvYQKfIQSfUP/gE66D8+8H7VxwAAAABJRU5ErkJggg==", // 這裡稍後會由系統自動填入您上傳的 Base64
+  bankName: "國泰世華銀行 (013)",
+  accountNumber: "128506043936",
+  note: "記得註明 2026 願景板"
+};

@@ -4,44 +4,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 願景板</title>
+    <title>2026 願景板 | 聽見內心的聲音</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500&family=Noto+Sans+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        :root {
+            --soft-bg: #fdfcfb;
+            --dream-gradient: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            --accent-indigo: #818cf8;
+        }
         body {
-            font-family: 'Noto+Sans+TC', sans-serif;
-            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--dream-gradient);
             min-height: 100vh;
-            color: #2d3748;
+            color: #4a5568;
+            overflow-x: hidden;
+        }
+        h1, h2, .serif {
+            font-family: 'Noto Serif TC', serif;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(226, 209, 195, 0.3);
+        }
+        .step-transition {
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .fade-in {
-            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: fadeIn 1s ease-out forwards;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .wabi-sabi-border {
-            border-radius: 45% 55% 58% 42% / 46% 41% 59% 54%;
+        .button-hover {
+            transition: all 0.3s ease;
         }
-        ::-webkit-scrollbar {
-            width: 6px;
+        .button-hover:hover {
+            letter-spacing: 0.15em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+        .input-elegant {
+            background: transparent;
+            border-bottom: 1px solid #cbd5e0;
+            transition: border-color 0.4s;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #a0aec0;
-            border-radius: 10px;
+        .input-elegant:focus {
+            border-bottom: 1px solid #818cf8;
+            outline: none;
         }
     </style>
 <script type="importmap">
@@ -55,7 +70,7 @@
 }
 </script>
 </head>
-<body class="selection:bg-indigo-100 selection:text-indigo-900">
+<body class="selection:bg-indigo-50">
     <div id="root"></div>
 </body>
 </html>
